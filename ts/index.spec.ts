@@ -6,8 +6,10 @@ describe("bind-sql-string", () => {
         FROM   SomeTable st
         WHERE  st.SomeNumberColumn > :someNumberValue
         AND    st.SomeStringColumn = :someStringValue
-        AND    st.SomeDate BETWEEN :startDate AND :endDate
-        AND    st.SomeOtherColumn < :someNumberValue
+        AND    st.SomeDate BETWEEN :startDate AND :endDate 
+        AND    st.SomeOtherColumn<:someNumberValue
+        AND    st.SomInColumn IN (:someStringValue,'B','C')
+        AND    st.SomeOtherColumn=2+:someStringValue
     `;
 
     const bindings = {
@@ -30,5 +32,7 @@ describe("bind-sql-string", () => {
         expect(typeof(setup)).toBe("object");
         expect(setup.sql).toBeDefined();
         expect(setup.parameters).toBeDefined();
+        expect(setup.parameters.length).toBe(7);
+        expect(setup.sql.indexOf(':')).toBe(-1);
     });
 });

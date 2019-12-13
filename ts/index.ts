@@ -47,7 +47,8 @@ export function queryBindToString(
 }
 
 function getParameterizedSql(original: NamedParameterizedSql): Db2ParameterizedSql {
-    const regexp: RegExp = /[\s(=><]([\x3A\x24\x40][a-z0-9]*)[\s)]*/gim;
+    const regString = "(?!([\s(,=><]){1})([\x3A\x24\x40][a-z0-9]*)(?=[\s,)]*)";
+    const regexp: RegExp = new RegExp(regString, 'gi')//gim;
 
     const returnVal: Db2ParameterizedSql = {
         sql: original.sql,
@@ -55,13 +56,12 @@ function getParameterizedSql(original: NamedParameterizedSql): Db2ParameterizedS
     };
 
     const matches = original.sql.match(regexp);
-
     if (matches) {
         matches.forEach((match) => {
             const matchedName: string = match.trim().substr(1, match.length);
             const param = getParamValue(matchedName, original.parameters);
             if (param===undefined) {
-                throw new Error("Parameter not found.");
+                throw new Error("Parameter not found: " + matchedName + ". Available: " + Object.keys(original.parameters));
             }else{
                 returnVal.parameters.push( param.value );
             }        
