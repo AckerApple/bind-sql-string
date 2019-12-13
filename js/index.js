@@ -21,7 +21,8 @@ function queryBindToString(string, nameValuePairs, { quoteEscaper } = { quoteEsc
 }
 exports.queryBindToString = queryBindToString;
 function getParameterizedSql(original) {
-    const regexp = /[\s(=><]([\x3A\x24\x40][a-z0-9]*)[\s)]*/gim;
+    const regString = "(?!([\s(,=><]){1})([\x3A\x24\x40][a-z0-9]*)(?=[\s,)]*)";
+    const regexp = new RegExp(regString, 'gi');
     const returnVal = {
         sql: original.sql,
         parameters: []
@@ -32,7 +33,7 @@ function getParameterizedSql(original) {
             const matchedName = match.trim().substr(1, match.length);
             const param = getParamValue(matchedName, original.parameters);
             if (param === undefined) {
-                throw new Error("Parameter not found.");
+                throw new Error("Parameter not found: " + matchedName + ". Available: " + Object.keys(original.parameters));
             }
             else {
                 returnVal.parameters.push(param.value);
