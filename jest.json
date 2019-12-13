@@ -1,0 +1,11 @@
+{
+    "globals": {
+        "ts-jest": {
+            "tsConfig": "tsconfig.json"
+        }
+    },
+    "transform": {
+        "^.+\\.tsx?$": "ts-jest"
+    },
+    "testRegex": "\\.(test|spec)\\.(ts|tsx)$"
+}

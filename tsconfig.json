@@ -1,0 +1,22 @@
+{
+    "compilerOptions": {
+        "strict": true,
+        "allowJs": false,
+        "sourceMap": false,
+        "outDir": "./js",
+        "noImplicitAny": true,
+        "removeComments": true,
+        "esModuleInterop": true,
+        "lib": ["es2017"],
+        "target": "es2017",
+        "module": "commonjs",
+        "moduleResolution": "node",
+        "noUnusedLocals": true,
+        "resolveJsonModule": true,
+        "noUnusedParameters": true,
+        "baseUrl": "."
+    },
+    "exclude": [
+        "node_modules"
+    ]
+}
