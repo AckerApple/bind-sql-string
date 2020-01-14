@@ -10,7 +10,8 @@ describe("bind-sql-string", () => {
         AND    st.SomeDate BETWEEN :startDate AND :endDate 
         AND    st.SomeOtherColumn<:someNumberValue
         AND    st.SomInColumn IN (:someStringValue,'B','C')
-        AND    st.SomeOtherColumn=2+:someStringValue
+        AND    st.SomeOtherColumn = 2+:someStringValue
+        AND    st.SomeStringArg = 'keep this '':binding'''
     `;
     const bindings = {
         someNumberValue: 1,
@@ -22,6 +23,7 @@ describe("bind-sql-string", () => {
         const string = index_1.queryBindToString(sql, bindings, { quoteEscaper: "''" });
         expect(string).toBeDefined();
         expect(typeof (string)).toBe("string");
+        expect(string.includes("keep this :binding")).toBe(false);
     });
     it("#queryBind", () => {
         const setup = index_1.queryBind(sql, bindings);
@@ -29,7 +31,13 @@ describe("bind-sql-string", () => {
         expect(typeof (setup)).toBe("object");
         expect(setup.sql).toBeDefined();
         expect(setup.parameters).toBeDefined();
-        expect(setup.parameters.length).toBe(7);
+        expect(setup.parameters.length).toBe(10);
         expect(setup.sql.indexOf(':')).toBe(-1);
+        expect(setup.valuesObject.quotedReplacement_0).toBeDefined();
+        expect(setup.valuesObject.quotedReplacement_0).toBe("B");
+        expect(setup.valuesObject.quotedReplacement_1).toBeDefined();
+        expect(setup.valuesObject.quotedReplacement_1).toBe("C");
+        expect(setup.valuesObject.quotedReplacement_2).toBeDefined();
+        expect(setup.valuesObject.quotedReplacement_2).toBe("keep this '':binding''");
     });
 });

@@ -19,8 +19,11 @@ const sql = `
     FROM   SomeTable st
     WHERE  st.SomeNumberColumn > :someNumberValue
     AND    st.SomeStringColumn = :someStringValue
-    AND    st.SomeDate BETWEEN :startDate AND :endDate
-    AND    st.SomeOtherColumn < :someNumberValue
+    AND    st.SomeDate BETWEEN :startDate AND :endDate 
+    AND    st.SomeOtherColumn<:someNumberValue
+    AND    st.SomInColumn IN (:someStringValue,'B','C')
+    AND    st.SomeOtherColumn = 2+:someStringValue
+    AND    st.SomeStringArg = 'keep this '':binding'''
 `;
 
 const bindings = {
@@ -40,10 +43,24 @@ const setup = queryBind(sql, bindings);
         FROM   SomeTable st
         WHERE  st.SomeNumberColumn > ?
         AND    st.SomeStringColumn = ?
-        AND    st.SomeDate BETWEEN ? AND ?
-        AND    st.SomeOtherColumn < ?
+        AND    st.SomeDate BETWEEN ? AND ? 
+        AND    st.SomeOtherColumn<?
+        AND    st.SomInColumn IN (?,?,?)
+        AND    st.SomeOtherColumn = 2+?
+        AND    st.SomeStringArg = ?
     `,
-    parameters: [ 1, 'A', 1576258452153, 1576258452153, 1 ]
+    parameters:[
+      1, // someNumberValue
+      'He\'s got value', // someStringValue
+      1579032023955, // startDate
+      1579032023955, // endDate
+      1, // someNumberValue
+      'He\'s got value', // someStringValue
+      'B', // quotedReplacement_0
+      'C', // quotedReplacement_1
+      'He\'s got value', // someStringValue
+      'keep this \'\':binding\'\'' // quotedReplacement_2
+    ]
 }
 ```
 

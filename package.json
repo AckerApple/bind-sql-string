@@ -1,11 +1,12 @@
 {
   "name": "bind-sql-string",
-  "version": "0.0.2",
+  "version": "0.1.0",
   "description": "Helpful functionality to convert a query string, that has name/value bindings, into a query string better suited for you individual database engine.",
   "main": "js/index.js",
   "scripts": {
     "test": "jest --config jest.json",
     "build:tsc": "tsc -p tsconfig.json",
+    "watch:tsc": "npm run build:tsc -- --watch",
     "build": "npm run build:tsc"
   },
   "keywords": [],

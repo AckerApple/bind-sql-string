@@ -12,6 +12,7 @@ interface NamedParameterizedSql {
 interface Db2ParameterizedSql {
     sql: string;
     parameters: (boolean|string|number)[];
+    valuesObject: any
 }
 
 export function queryBind(
@@ -47,21 +48,32 @@ export function queryBindToString(
 }
 
 function getParameterizedSql(original: NamedParameterizedSql): Db2ParameterizedSql {
-    const regString = "(?!([\s(,=><]){1})([\x3A\x24\x40][a-z0-9]*)(?=[\s,)]*)";
-    const regexp: RegExp = new RegExp(regString, 'gi')//gim;
+    const quoteRegEx = "('([^']|'')*')";
+    const bindRegString = "(?!([\s(,=><]){1})([\x3A\x24\x40][a-z0-9_]*)(?=[\s,)]*)";
+    const regexp: RegExp = new RegExp(bindRegString, 'gi')//gim;
 
     const returnVal: Db2ParameterizedSql = {
         sql: original.sql,
-        parameters: []
+        parameters: [],
+        valuesObject: original.parameters
     };
 
-    const matches = original.sql.match(regexp);
-    if (matches) {
-        matches.forEach((match) => {
+    const quoteMatches = returnVal.sql.match(new RegExp(quoteRegEx, 'g'));
+    if (quoteMatches) {
+        quoteMatches.forEach((match, index: number) => {
+            const name = "quotedReplacement_" + index;
+            original.parameters[name] = match.substring(1, match.length).substring(0, match.length - 2);
+            returnVal.sql = returnVal.sql.replace(match, ":" + name);
+        });
+    }
+
+    const bindMatches = returnVal.sql.match(regexp);
+    if (bindMatches) {
+        bindMatches.forEach((match) => {
             const matchedName: string = match.trim().substr(1, match.length);
             const param = getParamValue(matchedName, original.parameters);
             if (param===undefined) {
-                throw new Error("Parameter not found: " + matchedName + ". Available: " + Object.keys(original.parameters));
+                throw new Error("Parameter not found: '" + matchedName + "'. Available: " + Object.keys(original.parameters));
             }else{
                 returnVal.parameters.push( param.value );
             }        
@@ -74,6 +86,8 @@ function getParameterizedSql(original: NamedParameterizedSql): Db2ParameterizedS
             "?"
         );
     }
+
+    console.log(returnVal.parameters)
 
     return returnVal;
 }
