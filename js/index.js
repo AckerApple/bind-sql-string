@@ -53,7 +53,6 @@ function getParameterizedSql(original) {
     for (let keyName in original.parameters) {
         returnVal.sql = returnVal.sql.replace(new RegExp("[\x3A\x24\x40]" + keyName, "g"), "?");
     }
-    console.log(returnVal.parameters);
     return returnVal;
 }
 function getParamValue(name, parameters) {

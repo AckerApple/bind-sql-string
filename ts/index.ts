@@ -87,8 +87,6 @@ function getParameterizedSql(original: NamedParameterizedSql): Db2ParameterizedS
         );
     }
 
-    console.log(returnVal.parameters)
-
     return returnVal;
 }
 
