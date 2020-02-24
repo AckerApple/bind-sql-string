@@ -41,3 +41,23 @@ describe("bind-sql-string", () => {
         expect(setup.valuesObject.quotedReplacement_2).toBe("keep this '':binding''");
     });
 });
+
+describe("bind-sql-string-to-array", () => {
+    const sql = `
+        SELECT *
+        FROM   SomeTable st
+        WHERE st.some = :someNumberValue  
+        st.SomeColumn IN (:someArray) 
+    `;
+    const bindings = {
+        someNumberValue: 1,
+        someArray: ["A", "B", "C"]
+    };
+    it("#queryBindArray", () => {
+        const setup = index_1.queryBind(sql, bindings);
+        expect(setup).toBeDefined();
+        expect(setup.parameters.length).toBe(4);
+        expect((setup.sql.match(/\?/g) || []).length).toEqual(4);
+    });
+});
+//# sourceMappingURL=index.spec.js.map
