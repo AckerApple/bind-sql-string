@@ -2,7 +2,7 @@
     "compilerOptions": {
         "strict": true,
         "allowJs": false,
-        "sourceMap": false,
+        "sourceMap": true,
         "outDir": "./js",
         "noImplicitAny": true,
         "removeComments": true,

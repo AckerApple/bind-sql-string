@@ -1,8 +1,10 @@
 export default queryBind;
 
 interface INameValuePairs {
-    [index:string]: boolean|string|number
+    [index:string]: boolean|string|number|baseType[]
 }
+
+type baseType = boolean|string|number;
 
 interface NamedParameterizedSql {
     sql: string;
@@ -72,20 +74,33 @@ function getParameterizedSql(original: NamedParameterizedSql): Db2ParameterizedS
         bindMatches.forEach((match) => {
             const matchedName: string = match.trim().substr(1, match.length);
             const param = getParamValue(matchedName, original.parameters);
-            if (param===undefined) {
+            if (param === undefined) {
                 throw new Error("Parameter not found: '" + matchedName + "'. Available: " + Object.keys(original.parameters));
-            }else{
-                returnVal.parameters.push( param.value );
-            }        
+            } else {
+                if (Array.isArray(param.value)) {
+                    param.value.forEach(p => returnVal.parameters.push(p));
+                } else {
+                    returnVal.parameters.push(param.value);
+                }
+            }
         });
     }
 
-    for(let keyName in original.parameters){
-        returnVal.sql = returnVal.sql.replace(
-            new RegExp("[\x3A\x24\x40]" + keyName, "g"),
-            "?"
-        );
-    }
+
+    const keys: string[] = [...Object.keys(original.parameters)];
+    keys.forEach(keyName => {
+        const param = getParamValue(keyName, original.parameters);
+        if (param === undefined) {
+            throw new Error("Parameter not found: '" + keyName + "'. Available: " + Object.keys(original.parameters));
+        } else {
+            const replaceValue = Array.isArray(param.value) ?
+                ("?".repeat([...param.value].length)).split('').join(",") :
+                "?";
+            returnVal.sql = returnVal.sql.replace(
+                new RegExp("[\x3A\x24\x40]" + keyName, "g"), replaceValue
+            );
+        }
+    });
 
     return returnVal;
 }
@@ -93,7 +108,7 @@ function getParameterizedSql(original: NamedParameterizedSql): Db2ParameterizedS
 function getParamValue(
     name: string,
     parameters: INameValuePairs
-): {value: string | boolean | number} | void {
+): {value: string | boolean | number | baseType[] } | void {
     for(let keyName in parameters){
         if (keyName === name) {
             return { value: parameters[keyName] };

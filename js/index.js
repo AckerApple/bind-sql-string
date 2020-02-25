@@ -46,13 +46,28 @@ function getParameterizedSql(original) {
                 throw new Error("Parameter not found: '" + matchedName + "'. Available: " + Object.keys(original.parameters));
             }
             else {
-                returnVal.parameters.push(param.value);
+                if (Array.isArray(param.value)) {
+                    param.value.forEach(p => returnVal.parameters.push(p));
+                }
+                else {
+                    returnVal.parameters.push(param.value);
+                }
             }
         });
     }
-    for (let keyName in original.parameters) {
-        returnVal.sql = returnVal.sql.replace(new RegExp("[\x3A\x24\x40]" + keyName, "g"), "?");
-    }
+    const keys = [...Object.keys(original.parameters)];
+    keys.forEach(keyName => {
+        const param = getParamValue(keyName, original.parameters);
+        if (param === undefined) {
+            throw new Error("Parameter not found: '" + keyName + "'. Available: " + Object.keys(original.parameters));
+        }
+        else {
+            const replaceValue = Array.isArray(param.value) ?
+                ("?".repeat([...param.value].length)).split('').join(",") :
+                "?";
+            returnVal.sql = returnVal.sql.replace(new RegExp("[\x3A\x24\x40]" + keyName, "g"), replaceValue);
+        }
+    });
     return returnVal;
 }
 function getParamValue(name, parameters) {
@@ -62,3 +77,4 @@ function getParamValue(name, parameters) {
         }
     }
 }
+//# sourceMappingURL=index.js.map
