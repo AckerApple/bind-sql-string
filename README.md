@@ -21,16 +21,18 @@ const sql = `
     AND    st.SomeStringColumn = :someStringValue
     AND    st.SomeDate BETWEEN :startDate AND :endDate 
     AND    st.SomeOtherColumn<:someNumberValue
-    AND    st.SomInColumn IN (:someStringValue,'B','C')
+    AND    st.SomeInColumn IN (:someStringValue,'B','C')
     AND    st.SomeOtherColumn = 2+:someStringValue
     AND    st.SomeStringArg = 'keep this '':binding'''
+    AND    st.SomeStringColumn IN (:multipleValues)
 `;
 
 const bindings = {
     someNumberValue:  1,
     someStringValue:  "He's got value",
     startDate: Date.now(),
-    endDate: Date.now()
+    endDate: Date.now(),
+    multipleValues: ["A", "B", "C"]
 };
 
 const setup = queryBind(sql, bindings);
@@ -45,9 +47,10 @@ const setup = queryBind(sql, bindings);
         AND    st.SomeStringColumn = ?
         AND    st.SomeDate BETWEEN ? AND ? 
         AND    st.SomeOtherColumn<?
-        AND    st.SomInColumn IN (?,?,?)
+        AND    st.SomeInColumn IN (?,?,?)
         AND    st.SomeOtherColumn = 2+?
         AND    st.SomeStringArg = ?
+        AND    st.SomeStringColumn IN (:multipleValues)
     `,
     parameters:[
       1, // someNumberValue
@@ -60,6 +63,7 @@ const setup = queryBind(sql, bindings);
       'C', // quotedReplacement_1
       'He\'s got value', // someStringValue
       'keep this \'\':binding\'\'' // quotedReplacement_2
+      'A', 'B', 'C'
     ]
 }
 ```
@@ -78,6 +82,7 @@ const sql = `
     AND    st.SomeStringColumn = @someStringValue
     AND    st.SomeDate BETWEEN @startDate AND @endDate
     AND    st.SomeOtherColumn < @someNumberValue
+    AND    st.SomeStringColumn IN (@multipleValues)
 `;
 
 const bindings = {
@@ -97,4 +102,5 @@ WHERE  st.SomeNumberColumn > 1
 AND    st.SomeStringColumn = 'He''s got value'
 AND    st.SomeDate BETWEEN 1576258452153 AND 1576258452153
 AND    st.SomeOtherColumn < 1 
+AND    st.SomeStringColumn IN ('A','B','C')
 ```

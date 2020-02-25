@@ -21,32 +21,51 @@ export function queryBind(
     string: string,
     nameValuePairs: INameValuePairs
 ): Db2ParameterizedSql {
-    return getParameterizedSql({sql: string, parameters:nameValuePairs});
+    return getParameterizedSql({sql: string, parameters: nameValuePairs});
 }
 export function queryBindToString(
     string: string,
     nameValuePairs: INameValuePairs,
-    {quoteEscaper}: { quoteEscaper:string } = {quoteEscaper: "''"}
+    options: { quoteEscaper:string } = {quoteEscaper: "''"}
 ): string {
-    const regexp: RegExp = /[\s(=><](\?)[\s)]*/gim;
     const returnVal = queryBind(string, nameValuePairs);
-    quoteEscaper = quoteEscaper || "''";
-
-    returnVal.parameters.forEach(param => {
-        let newParam = ` ${param} `;
-        
-        if (typeof(param) === "string") {
-          newParam = param.replace(/'/g, quoteEscaper)
-          newParam = ` '${newParam}' `;
-        }
-
-        returnVal.sql = returnVal.sql.replace(
-            new RegExp(regexp, "im"),
-            newParam
-        );
+    returnVal.parameters.forEach((param) => {
+        const newParam = sqlStringParam(param, options);
+        returnVal.sql = sqlStringInjectParam(returnVal.sql, newParam);
     });
-
     return returnVal.sql;
+}
+
+function sqlStringParam(
+    param: baseType | baseType[],
+    options: { quoteEscaper:string } = {quoteEscaper: "''"}
+) {
+    let newParam = ` ${param} `;
+
+    if (typeof(param) === "string") {
+        newParam = stringParam(param, options);
+    }
+
+    return newParam;
+}
+
+function stringParam(
+    param: string,
+    {quoteEscaper}: { quoteEscaper:string } = {quoteEscaper: "''"}
+) {
+    param = param.replace(/'/g, quoteEscaper)
+    return `'${param}'`;
+}
+
+const sqlParamRegexp: RegExp = /([\s(=><,])(\?)([\s)]*)/;
+function sqlStringInjectParam(
+    sql: string,
+    param: baseType | baseType[]
+): string {
+    return sql.replace(
+        new RegExp(sqlParamRegexp, "im"),
+        "$1" + (param as string) + "$3"
+    );
 }
 
 function getParameterizedSql(original: NamedParameterizedSql): Db2ParameterizedSql {
@@ -85,7 +104,6 @@ function getParameterizedSql(original: NamedParameterizedSql): Db2ParameterizedS
             }
         });
     }
-
 
     const keys: string[] = [...Object.keys(original.parameters)];
     keys.forEach(keyName => {

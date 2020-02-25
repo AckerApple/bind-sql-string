@@ -5,21 +5,30 @@ function queryBind(string, nameValuePairs) {
     return getParameterizedSql({ sql: string, parameters: nameValuePairs });
 }
 exports.queryBind = queryBind;
-function queryBindToString(string, nameValuePairs, { quoteEscaper } = { quoteEscaper: "''" }) {
-    const regexp = /[\s(=><](\?)[\s)]*/gim;
+function queryBindToString(string, nameValuePairs, options = { quoteEscaper: "''" }) {
     const returnVal = queryBind(string, nameValuePairs);
-    quoteEscaper = quoteEscaper || "''";
-    returnVal.parameters.forEach(param => {
-        let newParam = ` ${param} `;
-        if (typeof (param) === "string") {
-            newParam = param.replace(/'/g, quoteEscaper);
-            newParam = ` '${newParam}' `;
-        }
-        returnVal.sql = returnVal.sql.replace(new RegExp(regexp, "im"), newParam);
+    returnVal.parameters.forEach((param) => {
+        const newParam = sqlStringParam(param, options);
+        returnVal.sql = sqlStringInjectParam(returnVal.sql, newParam);
     });
     return returnVal.sql;
 }
 exports.queryBindToString = queryBindToString;
+function sqlStringParam(param, options = { quoteEscaper: "''" }) {
+    let newParam = ` ${param} `;
+    if (typeof (param) === "string") {
+        newParam = stringParam(param, options);
+    }
+    return newParam;
+}
+function stringParam(param, { quoteEscaper } = { quoteEscaper: "''" }) {
+    param = param.replace(/'/g, quoteEscaper);
+    return `'${param}'`;
+}
+const sqlParamRegexp = /([\s(=><,])(\?)([\s)]*)/;
+function sqlStringInjectParam(sql, param) {
+    return sql.replace(new RegExp(sqlParamRegexp, "im"), "$1" + param + "$3");
+}
 function getParameterizedSql(original) {
     const quoteRegEx = "('([^']|'')*')";
     const bindRegString = "(?!([\s(,=><]){1})([\x3A\x24\x40][a-z0-9_]*)(?=[\s,)]*)";

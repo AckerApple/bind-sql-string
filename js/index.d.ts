@@ -9,6 +9,6 @@ interface Db2ParameterizedSql {
     valuesObject: any;
 }
 export declare function queryBind(string: string, nameValuePairs: INameValuePairs): Db2ParameterizedSql;
-export declare function queryBindToString(string: string, nameValuePairs: INameValuePairs, { quoteEscaper }?: {
+export declare function queryBindToString(string: string, nameValuePairs: INameValuePairs, options?: {
     quoteEscaper: string;
 }): string;
