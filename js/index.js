@@ -29,6 +29,7 @@ const sqlParamRegexp = /([\s(=><,])(\?)([\s)]*)/;
 function sqlStringInjectParam(sql, param) {
     return sql.replace(new RegExp(sqlParamRegexp, "im"), "$1" + param + "$3");
 }
+const baseQuoteVarName = "_quotedReplacement_";
 function getParameterizedSql(original, { autoBindStrings } = { autoBindStrings: true }) {
     const quoteRegEx = "('([^']|'')*')";
     const bindRegString = "(?!([\s(,=><]){1})([\x3A\x24\x40][a-z0-9_]*)(?=[\s,)]*)";
@@ -42,9 +43,9 @@ function getParameterizedSql(original, { autoBindStrings } = { autoBindStrings: 
     const quoteValues = {};
     if (quoteMatches) {
         quoteMatches.forEach((match, index) => {
-            const name = "_quotedReplacement_" + index;
-            original.parameters[name] = match.substring(1, match.length).substring(0, match.length - 2);
-            quoteValues[name] = original.parameters[name];
+            const name = baseQuoteVarName + index;
+            returnVal.valuesObject[name] = match.substring(1, match.length).substring(0, match.length - 2);
+            quoteValues[name] = returnVal.valuesObject[name];
             returnVal.sql = returnVal.sql.replace(match, ":" + name);
         });
     }
@@ -52,11 +53,14 @@ function getParameterizedSql(original, { autoBindStrings } = { autoBindStrings: 
     if (bindMatches) {
         bindMatches.forEach((match) => {
             const matchedName = match.trim().substr(1, match.length);
-            const param = getParamValue(matchedName, original.parameters);
+            const param = getParamValue(matchedName, returnVal.valuesObject);
             if (param === undefined) {
-                throw new Error("Parameter not found: '" + matchedName + "'. Available: " + Object.keys(original.parameters));
+                throw new Error("Parameter not found: '" + matchedName + "'. Available: " + Object.keys(returnVal.valuesObject));
             }
             else {
+                if (!autoBindStrings && Object.keys(quoteValues).includes(matchedName)) {
+                    return;
+                }
                 if (Array.isArray(param.value)) {
                     param.value.forEach(p => returnVal.parameters.push(p));
                 }
@@ -66,24 +70,23 @@ function getParameterizedSql(original, { autoBindStrings } = { autoBindStrings: 
             }
         });
     }
-    const keys = [...Object.keys(original.parameters)];
-    keys.forEach(keyName => {
-        const param = getParamValue(keyName, original.parameters);
+    Object.keys(returnVal.valuesObject).forEach((keyName) => {
+        const param = getParamValue(keyName, returnVal.valuesObject);
         if (param === undefined) {
-            throw new Error("Parameter not found: '" + keyName + "'. Available: " + Object.keys(original.parameters));
+            throw new Error("Parameter not found: '" + keyName + "'. Available: " + Object.keys(returnVal.valuesObject));
         }
         else {
+            if (!autoBindStrings && keyName.substring(0, baseQuoteVarName.length) === baseQuoteVarName) {
+                delete original.parameters[keyName];
+                returnVal.sql = returnVal.sql.replace(":" + keyName, "'" + quoteValues[keyName] + "'");
+                return;
+            }
             const replaceValue = Array.isArray(param.value) ?
                 ("?".repeat([...param.value].length)).split('').join(",") :
                 "?";
-            returnVal.sql = returnVal.sql.replace(new RegExp("[\x3A\x24\x40]" + keyName, "g"), replaceValue);
+            returnVal.sql = returnVal.sql.replace(new RegExp(":" + keyName, "g"), replaceValue);
         }
     });
-    if (!autoBindStrings) {
-        Object.keys(quoteValues).forEach((key) => {
-            returnVal.sql.replace(key, quoteValues[key]);
-        });
-    }
     return returnVal;
 }
 function getParamValue(name, parameters) {

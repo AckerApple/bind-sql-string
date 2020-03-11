@@ -46,19 +46,19 @@ describe("index.spec.ts", () => {
             expect(setup.valuesObject._quotedReplacement_2).toBeDefined();
             expect(setup.valuesObject._quotedReplacement_2).toBe("keep this '':binding''");
         });
-        it("#queryBind hoistStringsToParams false", () => {
+        it("#queryBind autoBindStrings false", () => {
             const setup = index_1.queryBind(sql, bindings, { autoBindStrings: false });
             expect(setup).toBeDefined();
             expect(typeof (setup)).toBe("object");
             expect(setup.sql).toBeDefined();
             expect(setup.parameters).toBeDefined();
-            expect(setup.parameters.length).toBe(13);
-            expect(setup.sql.indexOf(':')).toBe(-1);
-            expect(setup.valuesObject._quotedReplacement_0).toBeDefined();
-            expect(setup.valuesObject._quotedReplacement_0).toBe("B");
-            expect(setup.valuesObject._quotedReplacement_1).toBeDefined();
-            expect(setup.valuesObject._quotedReplacement_1).toBe("C");
+            expect(setup.parameters.length).toBe(10);
+            expect(setup.sql.indexOf(':')).toBeGreaterThan(0);
+            expect(setup.valuesObject._quotedReplacement_0).toBeUndefined();
+            expect(setup.valuesObject._quotedReplacement_1).toBeUndefined();
             expect(setup.valuesObject._quotedReplacement_2).toBeUndefined();
+            expect(setup.sql.includes("'B'")).toBeTruthy();
+            expect(setup.sql.includes("'C'")).toBeTruthy();
             expect(setup.sql.includes("keep this '':binding''")).toBeTruthy();
         });
     });
