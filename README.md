@@ -4,7 +4,7 @@ Helpful functionality to convert a query string, that has name/value bindings, i
 
 ### Table of Contents
 - [History](#history)
-- [Auto Security Feature](#auto-security-feature)
+- [Auto String Binding](#auto-string-binding)
 - [Examples](#examples)
     - [Example String and Binding Array](#example-string-and-binding-array)
     - [Example String Return](#example-string-return)
