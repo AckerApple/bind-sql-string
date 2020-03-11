@@ -3,11 +3,11 @@
 Helpful functionality to convert a query string, that has name/value bindings, into a query string better suited for your individual database engine.
 
 ### Table of Contents
-- History
-- Auto Security Feature
-- Examples
-    - Example String and Binding Array
-    - Example String Return
+- [History](#history)
+- [Auto Security Feature](#auto-security-feature)
+- [Examples](#examples)
+    - [Example String and Binding Array](#example-string-and-binding-array)
+    - [Example String Return](#example-string-return)
 
 ## History
 This code was born out of [ibm_db](https://www.npmjs.com/package/ibm_db) not supporting named value binding parameters. It seems to only support positional question mark bindings.
