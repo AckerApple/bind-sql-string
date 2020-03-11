@@ -39,12 +39,27 @@ describe("index.spec.ts", () => {
             expect(setup.parameters).toBeDefined();
             expect(setup.parameters.length).toBe(13);
             expect(setup.sql.indexOf(':')).toBe(-1);
-            expect(setup.valuesObject.quotedReplacement_0).toBeDefined();
-            expect(setup.valuesObject.quotedReplacement_0).toBe("B");
-            expect(setup.valuesObject.quotedReplacement_1).toBeDefined();
-            expect(setup.valuesObject.quotedReplacement_1).toBe("C");
-            expect(setup.valuesObject.quotedReplacement_2).toBeDefined();
-            expect(setup.valuesObject.quotedReplacement_2).toBe("keep this '':binding''");
+            expect(setup.valuesObject._quotedReplacement_0).toBeDefined();
+            expect(setup.valuesObject._quotedReplacement_0).toBe("B");
+            expect(setup.valuesObject._quotedReplacement_1).toBeDefined();
+            expect(setup.valuesObject._quotedReplacement_1).toBe("C");
+            expect(setup.valuesObject._quotedReplacement_2).toBeDefined();
+            expect(setup.valuesObject._quotedReplacement_2).toBe("keep this '':binding''");
+        });
+        it("#queryBind hoistStringsToParams false", () => {
+            const setup = index_1.queryBind(sql, bindings, { autoBindStrings: false });
+            expect(setup).toBeDefined();
+            expect(typeof (setup)).toBe("object");
+            expect(setup.sql).toBeDefined();
+            expect(setup.parameters).toBeDefined();
+            expect(setup.parameters.length).toBe(13);
+            expect(setup.sql.indexOf(':')).toBe(-1);
+            expect(setup.valuesObject._quotedReplacement_0).toBeDefined();
+            expect(setup.valuesObject._quotedReplacement_0).toBe("B");
+            expect(setup.valuesObject._quotedReplacement_1).toBeDefined();
+            expect(setup.valuesObject._quotedReplacement_1).toBe("C");
+            expect(setup.valuesObject._quotedReplacement_2).toBeUndefined();
+            expect(setup.sql.includes("keep this '':binding''")).toBeTruthy();
         });
     });
     describe("bind-sql-string-to-array", () => {

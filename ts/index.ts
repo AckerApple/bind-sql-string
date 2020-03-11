@@ -1,3 +1,4 @@
+declare const console: any;
 export default queryBind;
 
 interface INameValuePairs {
@@ -11,6 +12,10 @@ interface NamedParameterizedSql {
     parameters: INameValuePairs;
 }
 
+interface IBindOptions {
+    autoBindStrings?: boolean
+}
+
 interface Db2ParameterizedSql {
     sql: string;
     parameters: (boolean|string|number)[];
@@ -19,9 +24,10 @@ interface Db2ParameterizedSql {
 
 export function queryBind(
     string: string,
-    nameValuePairs: INameValuePairs
+    nameValuePairs: INameValuePairs,
+    options?: IBindOptions
 ): Db2ParameterizedSql {
-    return getParameterizedSql({sql: string, parameters: nameValuePairs});
+    return getParameterizedSql({sql: string, parameters: nameValuePairs}, options);
 }
 export function queryBindToString(
     string: string,
@@ -68,7 +74,11 @@ function sqlStringInjectParam(
     );
 }
 
-function getParameterizedSql(original: NamedParameterizedSql): Db2ParameterizedSql {
+const baseQuoteVarName = "_quotedReplacement_";
+function getParameterizedSql(
+    original: NamedParameterizedSql,
+    {autoBindStrings}: IBindOptions = {autoBindStrings: true}
+): Db2ParameterizedSql {
     const quoteRegEx = "('([^']|'')*')";
     const bindRegString = "(?!([\s(,=><]){1})([\x3A\x24\x40][a-z0-9_]*)(?=[\s,)]*)";
     const regexp: RegExp = new RegExp(bindRegString, 'gi')//gim;
@@ -79,11 +89,14 @@ function getParameterizedSql(original: NamedParameterizedSql): Db2ParameterizedS
         valuesObject: original.parameters
     };
 
+    // all existing strings to parameters regardless of setting
     const quoteMatches = returnVal.sql.match(new RegExp(quoteRegEx, 'g'));
+    const quoteValues: {[index: string]: any} = {};
     if (quoteMatches) {
         quoteMatches.forEach((match, index: number) => {
-            const name = "quotedReplacement_" + index;
-            original.parameters[name] = match.substring(1, match.length).substring(0, match.length - 2);
+            const name = baseQuoteVarName + index;
+            returnVal.valuesObject[name] = match.substring(1, match.length).substring(0, match.length - 2);
+            quoteValues[name] = returnVal.valuesObject[name];
             returnVal.sql = returnVal.sql.replace(match, ":" + name);
         });
     }
@@ -92,10 +105,15 @@ function getParameterizedSql(original: NamedParameterizedSql): Db2ParameterizedS
     if (bindMatches) {
         bindMatches.forEach((match) => {
             const matchedName: string = match.trim().substr(1, match.length);
-            const param = getParamValue(matchedName, original.parameters);
+            const param = getParamValue(matchedName, returnVal.valuesObject);
+            
             if (param === undefined) {
-                throw new Error("Parameter not found: '" + matchedName + "'. Available: " + Object.keys(original.parameters));
+                throw new Error("Parameter not found: '" + matchedName + "'. Available: " + Object.keys(returnVal.valuesObject));
             } else {
+                if(!autoBindStrings && Object.keys(quoteValues).includes(matchedName)) {
+                    return; // dont add to list of parameters as this will be removed
+                }
+                
                 if (Array.isArray(param.value)) {
                     param.value.forEach(p => returnVal.parameters.push(p));
                 } else {
@@ -105,17 +123,22 @@ function getParameterizedSql(original: NamedParameterizedSql): Db2ParameterizedS
         });
     }
 
-    const keys: string[] = [...Object.keys(original.parameters)];
-    keys.forEach(keyName => {
-        const param = getParamValue(keyName, original.parameters);
+    Object.keys(returnVal.valuesObject).forEach((keyName) => {
+        const param = getParamValue(keyName, returnVal.valuesObject);
         if (param === undefined) {
-            throw new Error("Parameter not found: '" + keyName + "'. Available: " + Object.keys(original.parameters));
+            throw new Error("Parameter not found: '" + keyName + "'. Available: " + Object.keys(returnVal.valuesObject));
         } else {
+            if(!autoBindStrings && keyName.substring(0, baseQuoteVarName.length) === baseQuoteVarName) {
+                delete original.parameters[keyName];
+                returnVal.sql = returnVal.sql.replace(":" + keyName, "'" + quoteValues[keyName]+ "'");
+                return; // no string auto hoisting as parameter which also mean don't continue to ? replacements
+            }
+
             const replaceValue = Array.isArray(param.value) ?
                 ("?".repeat([...param.value].length)).split('').join(",") :
                 "?";
             returnVal.sql = returnVal.sql.replace(
-                new RegExp("[\x3A\x24\x40]" + keyName, "g"), replaceValue
+                new RegExp(":" + keyName, "g"), replaceValue
             );
         }
     });

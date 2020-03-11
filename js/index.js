@@ -1,8 +1,8 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = queryBind;
-function queryBind(string, nameValuePairs) {
-    return getParameterizedSql({ sql: string, parameters: nameValuePairs });
+function queryBind(string, nameValuePairs, options) {
+    return getParameterizedSql({ sql: string, parameters: nameValuePairs }, options);
 }
 exports.queryBind = queryBind;
 function queryBindToString(string, nameValuePairs, options = { quoteEscaper: "''" }) {
@@ -29,7 +29,7 @@ const sqlParamRegexp = /([\s(=><,])(\?)([\s)]*)/;
 function sqlStringInjectParam(sql, param) {
     return sql.replace(new RegExp(sqlParamRegexp, "im"), "$1" + param + "$3");
 }
-function getParameterizedSql(original) {
+function getParameterizedSql(original, { autoBindStrings } = { autoBindStrings: true }) {
     const quoteRegEx = "('([^']|'')*')";
     const bindRegString = "(?!([\s(,=><]){1})([\x3A\x24\x40][a-z0-9_]*)(?=[\s,)]*)";
     const regexp = new RegExp(bindRegString, 'gi');
@@ -39,10 +39,12 @@ function getParameterizedSql(original) {
         valuesObject: original.parameters
     };
     const quoteMatches = returnVal.sql.match(new RegExp(quoteRegEx, 'g'));
+    const quoteValues = {};
     if (quoteMatches) {
         quoteMatches.forEach((match, index) => {
-            const name = "quotedReplacement_" + index;
+            const name = "_quotedReplacement_" + index;
             original.parameters[name] = match.substring(1, match.length).substring(0, match.length - 2);
+            quoteValues[name] = original.parameters[name];
             returnVal.sql = returnVal.sql.replace(match, ":" + name);
         });
     }
@@ -77,6 +79,11 @@ function getParameterizedSql(original) {
             returnVal.sql = returnVal.sql.replace(new RegExp("[\x3A\x24\x40]" + keyName, "g"), replaceValue);
         }
     });
+    if (!autoBindStrings) {
+        Object.keys(quoteValues).forEach((key) => {
+            returnVal.sql.replace(key, quoteValues[key]);
+        });
+    }
     return returnVal;
 }
 function getParamValue(name, parameters) {
