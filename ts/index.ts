@@ -80,7 +80,7 @@ function getParameterizedSql(
     {autoBindStrings}: IBindOptions = {autoBindStrings: true}
 ): Db2ParameterizedSql {
     const quoteRegEx = "('([^']|'')*')";
-    const bindRegString = "(?!([\s(,=><]){1})([\x3A\x24\x40][a-z0-9_]*)(?=[\s,)]*)";
+    const bindRegString = "(?!([\s(,=><]){1})([\:][a-z0-9_]*)(?=[\s,)]*)";
     const regexp: RegExp = new RegExp(bindRegString, 'gi')//gim;
 
     const returnVal: Db2ParameterizedSql = {
