@@ -1,6 +1,11 @@
 # bind-sql-string - Change Log
 All notable changes to this project will be documented here.
 
+## 1.2.0 - (2020-03-19)
+- auto protection off by default
+- formatting
+- only support colons for binding parameters
+
 ## 1.1.0 - (2020-03-11)
 - Added autoBindStrings toggle
 - updated docs

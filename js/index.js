@@ -1,77 +1,80 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.default = queryBind;
-function queryBind(string, nameValuePairs, options) {
-    return getParameterizedSql({ sql: string, parameters: nameValuePairs }, options);
+function queryBind(queryString, nameValuePairs, options) {
+    return getParameterizedSql({ sql: queryString, parameters: nameValuePairs }, options);
 }
 exports.queryBind = queryBind;
-function queryBindToString(string, nameValuePairs, options = { quoteEscaper: "''" }) {
-    const returnVal = queryBind(string, nameValuePairs);
-    returnVal.parameters.forEach((param) => {
+function queryBindToString(queryString, nameValuePairs, options = { quoteEscaper: "''" }) {
+    const returnVal = queryBind(queryString, nameValuePairs);
+    for (const param of returnVal.parameters) {
         const newParam = sqlStringParam(param, options);
         returnVal.sql = sqlStringInjectParam(returnVal.sql, newParam);
-    });
+    }
     return returnVal.sql;
 }
 exports.queryBindToString = queryBindToString;
 function sqlStringParam(param, options = { quoteEscaper: "''" }) {
-    let newParam = ` ${param} `;
     if (typeof (param) === "string") {
-        newParam = stringParam(param, options);
+        return stringParam(param, options);
     }
-    return newParam;
+    return " " + param + " ";
 }
 function stringParam(param, { quoteEscaper } = { quoteEscaper: "''" }) {
-    param = param.replace(/'/g, quoteEscaper);
-    return `'${param}'`;
+    return "'" + param.replace(/'/g, quoteEscaper) + "'";
 }
 const sqlParamRegexp = /([\s(=><,])(\?)([\s)]*)/;
+const sqlParamReg = new RegExp(sqlParamRegexp, "im");
 function sqlStringInjectParam(sql, param) {
-    return sql.replace(new RegExp(sqlParamRegexp, "im"), "$1" + param + "$3");
+    return sql.replace(sqlParamReg, "$1" + param + "$3");
 }
 const baseQuoteVarName = "_quotedReplacement_";
-function getParameterizedSql(original, { autoBindStrings } = { autoBindStrings: true }) {
-    const quoteRegEx = "('([^']|'')*')";
-    const bindRegString = "(?!([\s(,=><]){1})([\x3A\x24\x40][a-z0-9_]*)(?=[\s,)]*)";
-    const regexp = new RegExp(bindRegString, 'gi');
+const quoteRegEx = "('([^']|'')*')";
+const bindRegString = "(?!([\s(,=><]){1})(:[a-z0-9_]*)(?=[\s,)]*)";
+const regexp = new RegExp(bindRegString, "gi");
+const quoteReg = new RegExp(quoteRegEx, "g");
+function getParameterizedSql(original, { autoBindStrings } = { autoBindStrings: false }) {
     const returnVal = {
         sql: original.sql,
         parameters: [],
         valuesObject: original.parameters
     };
-    const quoteMatches = returnVal.sql.match(new RegExp(quoteRegEx, 'g'));
+    const quoteMatches = returnVal.sql.match(quoteReg);
     const quoteValues = {};
     if (quoteMatches) {
-        quoteMatches.forEach((match, index) => {
+        for (let index = quoteMatches.length - 1; index >= 0; --index) {
+            const match = quoteMatches[index];
             const name = baseQuoteVarName + index;
             returnVal.valuesObject[name] = match.substring(1, match.length).substring(0, match.length - 2);
             quoteValues[name] = returnVal.valuesObject[name];
             returnVal.sql = returnVal.sql.replace(match, ":" + name);
-        });
+        }
     }
     const bindMatches = returnVal.sql.match(regexp);
     if (bindMatches) {
-        bindMatches.forEach((match) => {
+        const quoteValueKeys = Object.keys(quoteValues);
+        for (const match of bindMatches) {
             const matchedName = match.trim().substr(1, match.length);
-            const param = getParamValue(matchedName, returnVal.valuesObject);
+            const param = returnVal.valuesObject[matchedName];
             if (param === undefined) {
                 throw new Error("Parameter not found: '" + matchedName + "'. Available: " + Object.keys(returnVal.valuesObject));
             }
             else {
-                if (!autoBindStrings && Object.keys(quoteValues).includes(matchedName)) {
-                    return;
+                if (!autoBindStrings && quoteValueKeys.indexOf(matchedName) >= 0) {
+                    continue;
                 }
-                if (Array.isArray(param.value)) {
-                    param.value.forEach(p => returnVal.parameters.push(p));
+                if (Array.isArray(param)) {
+                    returnVal.parameters.push(...param);
                 }
                 else {
-                    returnVal.parameters.push(param.value);
+                    returnVal.parameters.push(param);
                 }
             }
-        });
+        }
     }
-    Object.keys(returnVal.valuesObject).forEach((keyName) => {
-        const param = getParamValue(keyName, returnVal.valuesObject);
+    const keys = Object.keys(returnVal.valuesObject);
+    for (const keyName of keys) {
+        const param = returnVal.valuesObject[keyName];
         if (param === undefined) {
             throw new Error("Parameter not found: '" + keyName + "'. Available: " + Object.keys(returnVal.valuesObject));
         }
@@ -79,21 +82,14 @@ function getParameterizedSql(original, { autoBindStrings } = { autoBindStrings: 
             if (!autoBindStrings && keyName.substring(0, baseQuoteVarName.length) === baseQuoteVarName) {
                 delete original.parameters[keyName];
                 returnVal.sql = returnVal.sql.replace(":" + keyName, "'" + quoteValues[keyName] + "'");
-                return;
+                continue;
             }
-            const replaceValue = Array.isArray(param.value) ?
-                ("?".repeat([...param.value].length)).split('').join(",") :
+            const replaceValue = Array.isArray(param) ?
+                ("?".repeat([...param].length)).split("").join(",") :
                 "?";
             returnVal.sql = returnVal.sql.replace(new RegExp(":" + keyName, "g"), replaceValue);
         }
-    });
-    return returnVal;
-}
-function getParamValue(name, parameters) {
-    for (let keyName in parameters) {
-        if (keyName === name) {
-            return { value: parameters[keyName] };
-        }
     }
+    return returnVal;
 }
 //# sourceMappingURL=index.js.map

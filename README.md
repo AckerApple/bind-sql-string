@@ -4,32 +4,13 @@ Helpful functionality to convert a query string, that has name/value bindings, i
 
 ### Table of Contents
 - [History](#history)
-- [Auto String Binding](#auto-string-binding)
 - [Examples](#examples)
     - [Example String and Binding Array](#example-string-and-binding-array)
     - [Example String Return](#example-string-return)
+- [Auto String Binding](#auto-string-binding)
 
 ## History
 This code was born out of [ibm_db](https://www.npmjs.com/package/ibm_db) not supporting named value binding parameters. It seems to only support positional question mark bindings.
-
-## Auto String Binding
-Please note, by default, this library hoists all query string variables (aka query string literals) into binded parameters
-
-**It can be turned off**
-```
-const setup = queryBind(sql, bindings, {autoBindStrings: false});
-```
-
-Benefits to Auto String Binding
-- You can use this library with code that has ZERO query binding parameters and get:
-    - Instantly you will have full SQL injection protection
-    - Instantly your database will better be able to cache query execution plans better
-        - Only applies to sql queries with only string values that would change
-- WARN: Since all strings are auto casted to binding parameters some wierd things could happen:
-    - Database engine and/or connectors could have problems with string lengths
-    - Database engine and/or connectors could have datatype casting issues
-    - Developers may not know of auto string hoisting and become confused during debugging
-
 
 ## Examples
 
@@ -130,3 +111,20 @@ AND    st.SomeDate BETWEEN 1576258452153 AND 1576258452153
 AND    st.SomeOtherColumn < 1 
 AND    st.SomeStringColumn IN ('A','B','C')
 ```
+
+## Auto String Binding
+This library can hoist all query string variables (aka query string literals) into binded parameters
+
+```
+const setup = queryBind(sql, bindings, {autoBindStrings: false});
+```
+
+Benefits to Auto String Binding
+- You can use this library with code that has ZERO query binding parameters and get:
+    - Instantly you will have full SQL injection protection
+    - Instantly your database will better be able to cache query execution plans better
+        - Only applies to sql queries with only string values that would change
+- WARN: Since all strings are auto casted to binding parameters some wierd things could happen:
+    - Database engine and/or connectors could have problems with string lengths
+    - Database engine and/or connectors could have datatype casting issues
+    - Developers may not know of auto string hoisting and become confused during debugging
