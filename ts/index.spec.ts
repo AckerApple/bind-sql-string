@@ -35,8 +35,8 @@ describe("index.spec.ts", () => {
             });    
         });
     
-        it("#queryBind", () => {
-            const setup = queryBind(sql, bindings);
+        it("#queryBind autoBindStrings true", () => {
+            const setup = queryBind(sql, bindings, {autoBindStrings: true});
             expect(setup).toBeDefined();
             expect(typeof(setup)).toBe("object");
             expect(setup.sql).toBeDefined();
