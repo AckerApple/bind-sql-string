@@ -57,7 +57,7 @@ const setup = queryBind(sql, bindings);
         AND    st.SomeInColumn IN (?,?,?)
         AND    st.SomeOtherColumn = 2+?
         AND    st.SomeStringArg = ?
-        AND    st.SomeStringColumn IN (:multipleValues)
+        AND    st.SomeStringColumn IN (?,?,?)
     `,
     parameters:[
       1, // someNumberValue
