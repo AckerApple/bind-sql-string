@@ -116,7 +116,7 @@ AND    st.SomeStringColumn IN ('A','B','C')
 This library can hoist all query string variables (aka query string literals) into binded parameters
 
 ```
-const setup = queryBind(sql, bindings, {autoBindStrings: false});
+const setup = queryBind(sql, bindings, {autoBindStrings: true});
 ```
 
 Benefits to Auto String Binding
