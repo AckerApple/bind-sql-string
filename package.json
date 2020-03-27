@@ -1,6 +1,6 @@
 {
   "name": "bind-sql-string",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "description": "Helpful functionality to convert a query string, that has name/value bindings, into a query string better suited for you individual database engine.",
   "main": "js/index.js",
   "typings": "js/index.d.ts",
@@ -26,10 +26,10 @@
   },
   "license": "MIT",
   "devDependencies": {
-    "@types/jest": "^24.9.1",
-    "jest": "^24.9.0",
+    "@types/jest": "^25.1.4",
+    "jest": "^25.2.3",
     "nodemon": "^2.0.2",
-    "ts-jest": "^24.3.0",
-    "typescript": "^3.8.2"
+    "ts-jest": "^25.2.1",
+    "typescript": "^3.8.3"
   }
 }

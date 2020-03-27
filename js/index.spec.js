@@ -31,8 +31,8 @@ describe("index.spec.ts", () => {
                 expect(string.includes("'Aa','Bb','Cc'")).toBe(true);
             });
         });
-        it("#queryBind", () => {
-            const setup = index_1.queryBind(sql, bindings);
+        it("#queryBind autoBindStrings true", () => {
+            const setup = index_1.queryBind(sql, bindings, { autoBindStrings: true });
             expect(setup).toBeDefined();
             expect(typeof (setup)).toBe("object");
             expect(setup.sql).toBeDefined();
