@@ -54,9 +54,9 @@ const setup = queryBind(sql, bindings);
         AND    st.SomeStringColumn = ?
         AND    st.SomeDate BETWEEN ? AND ? 
         AND    st.SomeOtherColumn<?
-        AND    st.SomeInColumn IN (?,?,?)
+        AND    st.SomeInColumn IN (?,'B','C')
         AND    st.SomeOtherColumn = 2+?
-        AND    st.SomeStringArg = ?
+        AND    st.SomeStringArg = 'keep this '':binding'''
         AND    st.SomeStringColumn IN (?,?,?)
     `,
     parameters:[
@@ -66,10 +66,7 @@ const setup = queryBind(sql, bindings);
       1579032023955, // endDate
       1, // someNumberValue
       'He\'s got value', // someStringValue
-      'B', // quotedReplacement_0
-      'C', // quotedReplacement_1
       'He\'s got value', // someStringValue
-      'keep this \'\':binding\'\'' // quotedReplacement_2
       'A', 'B', 'C'
     ]
 }
