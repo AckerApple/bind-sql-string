@@ -1,6 +1,9 @@
 # bind-sql-string - Change Log
 All notable changes to this project will be documented here.
 
+## 1.2.2 - (2020-05-21)
+- prevent name overlap
+
 ## 1.2.1 - (2020-03-27)
 - typos in docs
 

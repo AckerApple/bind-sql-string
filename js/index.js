@@ -18,7 +18,7 @@ function sqlStringParam(param, options = { quoteEscaper: "''" }) {
     if (typeof (param) === "string") {
         return stringParam(param, options);
     }
-    return " " + param + " ";
+    return param;
 }
 function stringParam(param, { quoteEscaper } = { quoteEscaper: "''" }) {
     return "'" + param.replace(/'/g, quoteEscaper) + "'";
@@ -79,15 +79,17 @@ function getParameterizedSql(original, { autoBindStrings } = { autoBindStrings: 
             throw new Error("Parameter not found: '" + keyName + "'. Available: " + Object.keys(returnVal.valuesObject));
         }
         else {
+            const keyNameFind = ":" + keyName + "(\\s|[^a-zA-Z]|$)";
+            const keyNameReg = new RegExp(keyNameFind, "g");
             if (!autoBindStrings && keyName.substring(0, baseQuoteVarName.length) === baseQuoteVarName) {
                 delete original.parameters[keyName];
-                returnVal.sql = returnVal.sql.replace(":" + keyName, "'" + quoteValues[keyName] + "'");
+                returnVal.sql = returnVal.sql.replace(keyNameReg, "'" + quoteValues[keyName] + "'$1");
                 continue;
             }
             const replaceValue = Array.isArray(param) ?
                 ("?".repeat([...param].length)).split("").join(",") :
                 "?";
-            returnVal.sql = returnVal.sql.replace(new RegExp(":" + keyName, "g"), replaceValue);
+            returnVal.sql = returnVal.sql.replace(keyNameReg, replaceValue + "$1");
         }
     }
     return returnVal;

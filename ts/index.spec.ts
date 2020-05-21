@@ -15,9 +15,11 @@ describe("index.spec.ts", () => {
             AND    st.SomeOtherColumn = 2 + :someStringValue
             AND    st.SomeStringArg = 'keep this '':binding'''
             AND    st.SomeStringColumn IN (:multipleValues)
+            AND    st.Some = :some
         `;
     
         const bindings = {
+            some: 99,
             someNumberValue:  1,
             someStringValue:  "He's got value",
             startDate: Date.now(),
@@ -32,6 +34,7 @@ describe("index.spec.ts", () => {
                 expect(typeof(string)).toBe("string");
                 expect(string.includes("keep this :binding")).toBe(false);
                 expect(string.includes("'Aa','Bb','Cc'")).toBe(true);
+                expect(string.includes("AND    st.Some = 99")).toBe(true);
             });    
         });
     
@@ -41,7 +44,7 @@ describe("index.spec.ts", () => {
             expect(typeof(setup)).toBe("object");
             expect(setup.sql).toBeDefined();
             expect(setup.parameters).toBeDefined();
-            expect(setup.parameters.length).toBe(13);
+            expect(setup.parameters.length).toBe(14);
             expect(setup.sql.indexOf(':')).toBe(-1);
             expect(setup.valuesObject._quotedReplacement_0).toBeDefined();
             expect(setup.valuesObject._quotedReplacement_0).toBe("B");
@@ -57,7 +60,7 @@ describe("index.spec.ts", () => {
             expect(typeof(setup)).toBe("object");
             expect(setup.sql).toBeDefined();
             expect(setup.parameters).toBeDefined();
-            expect(setup.parameters.length).toBe(10);
+            expect(setup.parameters.length).toBe(11);
             expect(setup.sql.indexOf(':')).toBeGreaterThan(0);
             expect(setup.valuesObject._quotedReplacement_0).toBeUndefined();
             expect(setup.valuesObject._quotedReplacement_1).toBeUndefined();
